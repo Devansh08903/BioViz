@@ -5,6 +5,12 @@
 
 **BioViz** is a next-generation bioinformatics platform designed for students, researchers, and pharmaceutical professionals. It provides a real-time, interactive environment to explore pharmaceutical compounds, visualize their 3D molecular structures, and understand their pharmacological mechanisms.
 
+## 👨‍💻 Author
+
+**Devansh Mishra**  
+*Student @ DY Patil University*  
+Innovative bioinformatics project focusing on data visualization and clinical accessibility.
+
 ## ✨ Features
 
 *   **🔬 3D Molecular Engine**: Real-time WebGL rendering of small molecules (PubChem CID) and protein targets (PDB ID) using `3Dmol.js`.
@@ -57,7 +63,7 @@ BioViz/
 ├── src/
 │   ├── components/
 │   │   ├── drug/        # specialized molecular viewer components
-│   │   └── ui/          # reusable UI kit (Cards, Badges, Buttons)
+│   │   ├── ui/          # reusable UI kit (Cards, Badges, Buttons)
 │   ├── contexts/        # Theme and global state
 │   ├── data/            # Local drug database (drugs.ts)
 │   ├── pages/           # Application views (Home, Search, Detail)

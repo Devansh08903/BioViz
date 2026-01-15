@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Tabs } from '../components/ui/Tabs';
 import { MolecularViewer } from '../components/drug/MolecularViewer';
 import { Badge } from '../components/ui/Badge';
-import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { getDrugById } from '../data/drugs';
 import { getPubChemDetails } from '../services/pubchem';
 import type { PubChemDetailedData } from '../services/pubchem';
@@ -243,7 +242,7 @@ export const DrugDetail = () => {
 
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="sm" onClick={() => navigate('/search')}>SEARCH</Button>
-                        <ThemeToggle />
+                        {/* Theme Toggle Removed */}
                     </div>
                 </div>
             </header>

@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Card, GlassCard } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { MolecularViewer } from '../components/drug/MolecularViewer';
 import { drugs, searchDrugs } from '../data/drugs'; // Import real data
 
@@ -12,7 +10,6 @@ export const Home = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState(drugs);
-    const [showViewer, setShowViewer] = useState(false);
 
     // Live Search
     useEffect(() => {
@@ -38,10 +35,7 @@ export const Home = () => {
 
     return (
         <div className="min-h-screen bg-grid text-white overflow-x-hidden font-sans">
-            {/* Fixed Theme Toggle */}
-            <div className="fixed top-6 right-6 z-50">
-                <ThemeToggle />
-            </div>
+            {/* Fixed Theme Toggle Removed */}
 
             {/* Hero Section */}
             <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -223,6 +217,7 @@ export const Home = () => {
 
             <footer className="py-12 border-t border-slate-800 bg-[#0B1120] text-slate-500 text-center font-mono text-sm">
                 <p>&copy; 2026 BIOVIZ SYSTEMS. ACADEMIC LICENSE.</p>
+                <p className="mt-2 text-primary-400">Created by <span className="text-white font-bold">Devansh Mishra</span> • DY Patil University</p>
                 <div className="flex justify-center gap-6 mt-4 opacity-50">
                     <span>PUBCHEM INTEGRATED</span>
                     <span>RCSB PDB LINKED</span>

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { drugs, searchDrugs, getCategories } from '../data/drugs';
 import { searchPubChem } from '../services/pubchem';
 import type { PubChemResult } from '../services/pubchem';
-import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 
@@ -108,7 +107,7 @@ export const Search = () => {
                     </div>
 
                     <div className="flex gap-4">
-                        <ThemeToggle />
+                        {/* Theme Toggle Removed */}
                     </div>
                 </div>
             </div>
@@ -159,7 +158,7 @@ export const Search = () => {
 
                     <div className="grid gap-4">
                         <AnimatePresence>
-                            {results.map((item, idx) => {
+                            {results.map((item, _idx) => {
                                 if (item.type === 'local') {
                                     const drug = item.data;
                                     return (

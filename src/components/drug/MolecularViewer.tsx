@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 
 declare global {
     interface Window {
@@ -10,7 +9,7 @@ declare global {
 interface MolecularViewerProps {
     cid?: string; // PubChem Compound ID (Small Molecule)
     pdbId?: string; // RCSB PDB ID (Macromolecule)
-    style?: 'stick' | 'sphere' | 'surface' | 'line';
+    style?: 'stick' | 'sphere' | 'surface' | 'line' | 'cartoon';
     className?: string;
     autoRoateInitial?: boolean;
 }
@@ -27,14 +26,12 @@ export const MolecularViewer = ({
     const [currentStyle, setCurrentStyle] = useState(style);
     const [autoRotate, setAutoRotate] = useState(autoRoateInitial);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     // Initialize Viewer
     useEffect(() => {
         if (!viewerRef.current || viewer) return;
 
         if (!window.$3Dmol) {
-            setError('Visualizer module loading...');
             // Simple poll to wait for script
             const interval = setInterval(() => {
                 if (window.$3Dmol && viewerRef.current) {
@@ -54,7 +51,6 @@ export const MolecularViewer = ({
                 setViewer(v);
             } catch (e) {
                 console.error("Viewer init error", e);
-                setError("Failed to initialize 3D Engine");
             }
         }
     }, [viewer]);
@@ -64,7 +60,6 @@ export const MolecularViewer = ({
         if (!viewer) return;
 
         setLoading(true);
-        setError(null);
         viewer.clear();
 
         const applyDefaultStyle = () => {
@@ -113,8 +108,8 @@ export const MolecularViewer = ({
           8  9  2  0  0  0  0
           8 10  1  0  0  0  0
           4 11  1  0  0  0  0
-         11 12  2  0  0  0  0
-         11 13  1  0  0  0  0
+          11 12  2  0  0  0  0
+          11 13  1  0  0  0  0
         M  END
         `;
             viewer.addModel(aspirinSDF, 'sdf');
@@ -125,10 +120,8 @@ export const MolecularViewer = ({
 
     const applyStyle = (type: string) => {
         if (!viewer) return;
-        viewer.setStyle({}, {}); // Clear
-
-        // Tech colors: Cyan carbons, Standard others
-        const atomColors = { C: '#00F0FF', O: '#FF0055', N: '#5555FF', S: '#FFFF00' };
+        viewer.removeAllSurfaces(); // Clear surfaces
+        viewer.setStyle({}, {}); // Clear atom styles
 
         if (type === 'stick') {
             viewer.setStyle({}, { stick: { radius: 0.15, colorscheme: 'Jmol' } });
@@ -136,6 +129,8 @@ export const MolecularViewer = ({
             viewer.setStyle({}, { sphere: { scale: 0.3, colorscheme: 'Jmol' } }); // Van der waals reduced
         } else if (type === 'surface') {
             viewer.addSurface(window.$3Dmol.SurfaceType.VDW, { opacity: 0.85, color: '#38bdf8' });
+        } else if (type === 'cartoon') {
+            viewer.setStyle({}, { cartoon: { color: 'spectrum' } });
         }
 
         viewer.render();
