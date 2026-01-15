@@ -4,26 +4,80 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { MolecularViewer } from '../components/drug/MolecularViewer';
-import { drugs, searchDrugs } from '../data/drugs'; // Import real data
+import { drugs, searchDrugs } from '../data/drugs';
+import { searchPubChem } from '../services/pubchem';
+import type { PubChemResult } from '../services/pubchem';
+
+// Combined result type for home page
+type HomeSearchResult =
+    | { type: 'local', data: typeof drugs[0] }
+    | { type: 'pubchem', data: PubChemResult };
 
 export const Home = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState(drugs);
+    const [searchResults, setSearchResults] = useState<HomeSearchResult[]>(
+        drugs.map(d => ({ type: 'local' as const, data: d }))
+    );
+    const [isSearching, setIsSearching] = useState(false);
 
-    // Live Search
+    // Hybrid Search (Local + PubChem)
     useEffect(() => {
-        if (searchQuery.trim() === '') {
-            setSearchResults(drugs);
-        } else {
-            setSearchResults(searchDrugs(searchQuery));
-        }
+        let active = true;
+
+        const performSearch = async () => {
+            if (searchQuery.trim() === '') {
+                setSearchResults(drugs.map(d => ({ type: 'local' as const, data: d })));
+                setIsSearching(false);
+                return;
+            }
+
+            setIsSearching(true);
+
+            // 1. Search Local Database
+            const localMatches = searchDrugs(searchQuery).map(d => ({
+                type: 'local' as const,
+                data: d
+            }));
+
+            // 2. Search PubChem (if query is long enough)
+            let pubChemMatches: HomeSearchResult[] = [];
+            if (searchQuery.length > 2) {
+                try {
+                    const pcResults = await searchPubChem(searchQuery);
+                    pubChemMatches = pcResults
+                        .filter(pc => !localMatches.some(l => l.data.cid === pc.cid.toString()))
+                        .map(pc => ({ type: 'pubchem' as const, data: pc }));
+                } catch (e) {
+                    console.warn("PubChem search failed", e);
+                }
+            }
+
+            if (active) {
+                setSearchResults([...localMatches, ...pubChemMatches]);
+                setIsSearching(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            performSearch();
+        }, 300); // Debounce
+
+        return () => {
+            active = false;
+            clearTimeout(timeoutId);
+        };
     }, [searchQuery]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (searchResults.length > 0) {
-            navigate(`/drug/${searchResults[0].id}`);
+            const first = searchResults[0];
+            if (first.type === 'local') {
+                navigate(`/drug/${first.data.id}`);
+            } else {
+                navigate(`/drug/pubchem-${first.data.cid}`);
+            }
         }
     };
 
@@ -94,19 +148,50 @@ export const Home = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="max-w-2xl mx-auto mt-4 text-left grid gap-2"
                         >
-                            {searchResults.slice(0, 3).map(drug => (
-                                <div
-                                    key={drug.id}
-                                    onClick={() => navigate(`/drug/${drug.id}`)}
-                                    className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex justify-between items-center cursor-pointer hover:border-primary-500/50 hover:bg-slate-800 transition-all group"
-                                >
-                                    <div>
-                                        <h4 className="text-white font-bold group-hover:text-primary-400 transition-colors">{drug.name}</h4>
-                                        <p className="text-xs text-slate-500 font-mono">{drug.category} • TARGET: {drug.target}</p>
-                                    </div>
-                                    <span className="text-slate-600 group-hover:text-primary-400">→</span>
+                            {searchResults.slice(0, 5).map((result, _idx) => {
+                                if (result.type === 'local') {
+                                    const drug = result.data;
+                                    return (
+                                        <div
+                                            key={`local-${drug.id}`}
+                                            onClick={() => navigate(`/drug/${drug.id}`)}
+                                            className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex justify-between items-center cursor-pointer hover:border-primary-500/50 hover:bg-slate-800 transition-all group"
+                                        >
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-white font-bold group-hover:text-primary-400 transition-colors">{drug.name}</h4>
+                                                    <Badge variant="success">Verified</Badge>
+                                                </div>
+                                                <p className="text-xs text-slate-500 font-mono">{drug.category} • TARGET: {drug.target}</p>
+                                            </div>
+                                            <span className="text-slate-600 group-hover:text-primary-400">→</span>
+                                        </div>
+                                    );
+                                } else {
+                                    const pc = result.data;
+                                    return (
+                                        <div
+                                            key={`pc-${pc.cid}`}
+                                            onClick={() => navigate(`/drug/pubchem-${pc.cid}`)}
+                                            className="p-4 bg-slate-900/60 border border-slate-800/50 rounded-xl flex justify-between items-center cursor-pointer hover:border-primary-400/50 hover:bg-slate-800 transition-all group"
+                                        >
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-slate-200 font-bold group-hover:text-primary-400 transition-colors">{pc.name}</h4>
+                                                    <Badge variant="warning">PubChem</Badge>
+                                                </div>
+                                                <p className="text-xs text-slate-500 font-mono">CID: {pc.cid}</p>
+                                            </div>
+                                            <span className="text-slate-600 group-hover:text-primary-400">→</span>
+                                        </div>
+                                    );
+                                }
+                            })}
+                            {isSearching && (
+                                <div className="text-center py-2 text-slate-500 text-sm">
+                                    <span className="animate-pulse">Searching PubChem database...</span>
                                 </div>
-                            ))}
+                            )}
                         </motion.div>
                     )}
 
